@@ -1,11 +1,27 @@
 import gspread
-from oauth2client.service_account import ServiceAccountCredentials
 import os
+import base64
+import json
+from oauth2client.service_account import ServiceAccountCredentials
 
-scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
-creds = ServiceAccountCredentials.from_json_keyfile_name("credenciais.json", scope)
+# Lê as credenciais do JSON em base64 da variável de ambiente
+credenciais_base64 = os.getenv("GOOGLE_CREDENTIALS_B64")
+
+if not credenciais_base64:
+    raise Exception(
+        "Variável de ambiente 'GOOGLE_CREDENTIALS_B64' não encontrada.")
+
+credenciais_json = base64.b64decode(credenciais_base64).decode("utf-8")
+credenciais_dict = json.loads(credenciais_json)
+
+# Autorização com o Google Sheets
+scope = ["https://spreadsheets.google.com/feeds",
+         "https://www.googleapis.com/auth/drive"]
+creds = ServiceAccountCredentials.from_json_keyfile_dict(
+    credenciais_dict, scope)
 client = gspread.authorize(creds)
 sheet = client.open("LISTA DE TIMES").sheet1
+
 
 def realizar_troca(nome1, jogador1, jogador2, nome2):
     dados = sheet.get_all_values()
